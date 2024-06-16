@@ -1,0 +1,67 @@
+# AI Labs
+
+This repository contains the code for the AI Labs project.
+Use: Open AI model.
+
+The `main.py` file contains two functions: `generate_response` and `main`. The `generate_response` function generates a chatbot response by creating an LLM chain, initializing a `ChatOpenAI` instance, retrieving a prompt, and invoking the chain with the user's question and retrieved context. The `main` function serves as the program's entry point, setting up a Streamlit interface. It collects user input, calls `generate_response` upon clicking "Enviar" (Send), and displays the generated response. In essence, `generate_response` processes the chatbot logic, while `main` handles the user interface.
+
+This project use the PDF file abount Midiacode company as context.
+
+## Local Setup
+
+To set up the project locally, follow these steps:
+
+1. Create a virtual environment using `pyenv`:
+
+   ```shell
+   pyenv virtualenv 3.11.4 ai-labs
+   ```
+
+2. Set the local Python version to the newly created virtual environment:
+
+   ```shell
+   pyenv local ai-labs
+   ```
+
+3. Initialize the project with Poetry:
+
+   ```shell
+   poetry init
+   ```
+
+4. Activate the Poetry shell:
+
+   ```shell
+   poetry shell
+   ```
+
+5. Install the project dependencies:
+
+   ```shell
+   poetry install
+   ```
+
+## Run
+
+To run the project, follow these steps:
+
+1. Set the OpenAI API key as an environment variable:
+
+   ```shell
+   export OPENAI_API_KEY={add your api key}
+   ```
+
+2. Run the main script using Streamlit:
+
+   ```shell
+   streamlit run main.py
+   ```
+
+## References
+
+Here are some helpful references related to this project:
+
+- [How to Build a PDF Chatbot with LangChain and Faiss](https://kevincoder.co.za/how-to-build-a-pdf-chatbot-with-langchain-and-faiss)
+- [YouTube: AI Labs Demo](https://youtu.be/rOjusRRO1EI?si=KFhcJ4FH4eCxdCGG&t=741)
+- [LLM Chains using Runnables](https://medium.com/@manoj-gupta/llm-chains-using-runnables-df500d2b7490)
+- [YouTube: AI Labs Tutorial](https://www.youtube.com/watch?v=moJRxxEddzU)

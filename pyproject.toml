@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "ai-labs"
+version = "0.1.0"
+description = ""
+authors = ["Luiz Gustavo Gavinho <lgavinho@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+langchain = "^0.2.3"
+openai = "^1.33.0"
+pypdf2 = "^3.0.1"
+langchain-community = "^0.2.4"
+tiktoken = "^0.7.0"
+pdfminer-six = "^20231228"
+langchain-text-splitters = "^0.2.1"
+faiss-cpu = "^1.8.0"
+langchain-openai = "^0.1.8"
+
+
+[tool.poetry.group.dev.dependencies]
+streamlit = "^1.35.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
