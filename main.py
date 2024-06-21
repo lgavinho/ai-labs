@@ -10,6 +10,7 @@ from prompt_template import get_prompt
 
 # Arquivo PDF com o conteúdo do Midiacode
 file_path = "2024-MidiacodeTextRepository.pdf"
+VERSION = '0.0.2'
 
 
 def split_paragraphs(rawText):
@@ -122,7 +123,7 @@ def main():
     """
     Main function to run the Midiacode Chatbot.
     """
-    st.title("Midiacode Chatbot")
+    st.title(f"Midiacode Chatbot v{VERSION}")
     st.header("Como posso te ajudar?")
     question = st.text_area("Pergunta")
     clicked = st.button("Enviar")
