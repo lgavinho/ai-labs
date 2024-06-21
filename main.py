@@ -123,8 +123,9 @@ def main():
     """
     Main function to run the Midiacode Chatbot.
     """
-    st.title(f"Midiacode Chatbot v{VERSION}")
+    st.title(f"Midiacode Chatbot (AI Labs)")
     st.header("Como posso te ajudar?")
+
     question = st.text_area("Pergunta")
     clicked = st.button("Enviar")
 
@@ -132,6 +133,8 @@ def main():
         st.write("Gerando resposta...")
         result = generate_response(question)
         st.info(result)
+
+    st.info(f"Powered by Midiacode AI Labs. Versão {VERSION}")
 
 
 st.set_page_config(
