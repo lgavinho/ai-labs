@@ -65,3 +65,4 @@ Here are some helpful references related to this project:
 - [YouTube: AI Labs Demo](https://youtu.be/rOjusRRO1EI?si=KFhcJ4FH4eCxdCGG&t=741)
 - [LLM Chains using Runnables](https://medium.com/@manoj-gupta/llm-chains-using-runnables-df500d2b7490)
 - [YouTube: AI Labs Tutorial](https://www.youtube.com/watch?v=moJRxxEddzU)
+- [Streamlit: Build a basic LLM chat app](https://docs.streamlit.io/develop/tutorials/llms/build-conversational-apps)
