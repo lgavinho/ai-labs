@@ -114,7 +114,7 @@ def retrieve_context(query: str, db: FAISS):
     Returns:
         list: A list of similar responses.
     """
-    similar_response = db.similarity_search(query, k=25)
+    similar_response = db.similarity_search(query, k=20)
     return similar_response
 
 
