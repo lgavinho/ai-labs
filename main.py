@@ -5,12 +5,14 @@ from langchain_openai import OpenAIEmbeddings
 from langchain_text_splitters import CharacterTextSplitter
 from langchain_core.runnables import RunnableSequence
 from langchain_openai import ChatOpenAI
+import time
+import random
 
 from prompt_template import get_prompt
 
 # Arquivo PDF com o conteúdo do Midiacode
 file_path = "2024-MidiacodeTextRepository.pdf"
-VERSION = '0.0.2'
+VERSION = '0.0.3'
 
 
 def split_paragraphs(rawText):
@@ -119,22 +121,50 @@ def generate_response(question: str):
     return response.content
 
 
+def streamed_response(question: str):
+    response = generate_response(question)
+    if random.choice(['yes', 'no']) == 'yes':
+        footer_message = "Se preferir, pode acessar nosso site [midiacode.com](https://midiacode.com/) e também solicitar um chat com nossa equipe."
+        response += "\n\n" + footer_message
+    for word in response.split():
+        yield word + " "
+        time.sleep(0.05)
+
+
 def main():
     """
     Main function to run the Midiacode Chatbot.
     """
-    st.title(f"Midiacode Chatbot (AI Labs)")
-    st.header("Como posso te ajudar?")
 
-    question = st.text_area("Pergunta")
-    clicked = st.button("Enviar")
+    st.title(f"Midiacode Chatbot")
+    st.write(f"Powered by Midiacode AI Labs. Versão {VERSION}")
 
-    if question and clicked:
-        st.write("Gerando resposta...")
-        result = generate_response(question)
-        st.info(result)
+    # Initialize chat history
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
 
-    st.info(f"Powered by Midiacode AI Labs. Versão {VERSION}")
+    with st.chat_message("assistant"):
+        st.write("Como posso te ajudar?")
+
+    # Display chat messages from history on app rerun
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+
+    # React to user input
+    if prompt := st.chat_input("Escreva sua pergunta aqui..."):
+        # Display user message in chat message container
+        with st.chat_message("user"):
+            st.markdown(prompt)
+        # Add user message to chat history
+        st.session_state.messages.append({"role": "user", "content": prompt})
+
+        with st.chat_message("assistant"):
+            answer = streamed_response(prompt)
+            response = st.write_stream(answer)
+            # Add assistant response to chat history
+            st.session_state.messages.append(
+                {"role": "assistant", "content": response})
 
 
 st.set_page_config(
