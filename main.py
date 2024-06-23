@@ -1,4 +1,5 @@
 import streamlit as st
+import re
 from PyPDF2 import PdfReader
 from langchain_community.vectorstores import FAISS
 from langchain_openai import OpenAIEmbeddings
@@ -35,6 +36,12 @@ def split_paragraphs(rawText):
     return text_splitter.split_text(rawText)
 
 
+def clean_text(text):
+    # Remove unnecessary line breaks and join words into proper sentences
+    cleaned_text = re.sub(r'\s*\n\s*', ' ', text)
+    return cleaned_text
+
+
 def extract_from_pdf(filepath: str):
     """
     Extracts text from a PDF file.
@@ -48,9 +55,12 @@ def extract_from_pdf(filepath: str):
     text_chunks = []
     with open(filepath, 'rb') as f:
         reader = PdfReader(f)
-        for page in reader.pages:
+        print("Number of pages: ", len(reader.pages))
+        for i, page in enumerate(reader.pages):
+            print(f"Extracting page {i+1}...")
             raw = page.extract_text()
-            chunks = split_paragraphs(raw)
+            cleaned = clean_text(raw)
+            chunks = split_paragraphs(cleaned)
             text_chunks += chunks
     return text_chunks
 
@@ -85,7 +95,7 @@ def retrieve_context(query: str, db: FAISS):
     return similar_response
 
 
-def generate_response(question: str):
+def generate_response(question: str, my_vectorstore: FAISS):
     """
     Generates a response to the given question.
 
@@ -95,11 +105,6 @@ def generate_response(question: str):
     Returns:
         str: The generated response.
     """
-    print("Extracting text from PDF: ", file_path)
-    text_chunks = extract_from_pdf(file_path)
-
-    print("Creating vectorstore...")
-    my_vectorstore = create_vectorstore(text_chunks)
 
     print("Creating LLM chain...")
     llm = ChatOpenAI(temperature=0, model="gpt-3.5-turbo-16k-0613")
@@ -121,8 +126,8 @@ def generate_response(question: str):
     return response.content
 
 
-def streamed_response(question: str):
-    response = generate_response(question)
+def streamed_response(question: str, my_vectorstore: FAISS):
+    response = generate_response(question, my_vectorstore)
     if random.choice(['yes', 'no']) == 'yes':
         footer_message = "Se preferir, pode acessar nosso site [midiacode.com](https://midiacode.com/) e também solicitar um chat com nossa equipe."
         response += "\n\n" + footer_message
@@ -138,6 +143,17 @@ def main():
 
     st.title(f"Midiacode Chatbot")
     st.write(f"Powered by Midiacode AI Labs. Versão {VERSION}")
+
+    if "my_vectorstore" not in st.session_state:
+        with st.spinner("Carregando PDF..."):
+            print("Extracting text from PDF: ", file_path)
+            text_chunks = extract_from_pdf(file_path)
+            print("Creating vectorstore...")
+            my_vectorstore = create_vectorstore(text_chunks)
+            st.session_state.my_vectorstore = my_vectorstore
+            print("Vectorstore created.")
+
+    my_vectorstore = st.session_state.my_vectorstore
 
     # Initialize chat history
     if "messages" not in st.session_state:
@@ -160,7 +176,7 @@ def main():
         st.session_state.messages.append({"role": "user", "content": prompt})
 
         with st.chat_message("assistant"):
-            answer = streamed_response(prompt)
+            answer = streamed_response(prompt, my_vectorstore)
             response = st.write_stream(answer)
             # Add assistant response to chat history
             st.session_state.messages.append(
@@ -170,19 +186,6 @@ def main():
 st.set_page_config(
     layout="centered", page_title="Midiacode Chatbot", page_icon=":robot:")
 
-
-st.markdown(
-    """
-    <style>
-    /* Estilizando área de texto */
-    .stTextArea textarea {
-        color: black; /* Define a cor do texto para azul */
-        /* Outros estilos de CSS opcionais, como font-size, font-family, etc. */
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
 
 if __name__ == "__main__":
     main()
