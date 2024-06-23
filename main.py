@@ -1,6 +1,8 @@
 import streamlit as st
 import re
 from PyPDF2 import PdfReader
+from bs4 import BeautifulSoup
+import requests
 from langchain_community.vectorstores import FAISS
 from langchain_openai import OpenAIEmbeddings
 from langchain_text_splitters import CharacterTextSplitter
@@ -12,7 +14,8 @@ import random
 from prompt_template import get_prompt
 
 # Arquivo PDF com o conteúdo do Midiacode
-file_path = "2024-MidiacodeTextRepository.pdf"
+PDF_FILE_PATH_SOURCE = "2024-MidiacodeTextRepository.pdf"
+PAGE_URL_SOURCE = "https://ptbr.midiacode.com/2022/02/22/perguntas-frequentes/"
 VERSION = '0.0.3'
 
 
@@ -65,6 +68,26 @@ def extract_from_pdf(filepath: str):
     return text_chunks
 
 
+def extract_from_html_page(url: str):
+    try:
+        # Send a GET request to the URL
+        response = requests.get(url)
+        # Check if the request was successful (status code 200)
+        if response.status_code == 200:
+            html_content = response.text
+            soup = BeautifulSoup(html_content, 'html.parser')
+            texts = soup.get_text(separator='\n')
+            cleaned = clean_text(texts)
+            chunks = split_paragraphs(cleaned)
+            return chunks
+        else:
+            print(
+                f"Failed to retrieve HTML: Status Code {response.status_code}")
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching URL: {e}")
+    return None
+
+
 def create_vectorstore(text_chunks: str):
     """
     Creates a vector store from the given text chunks.
@@ -91,7 +114,7 @@ def retrieve_context(query: str, db: FAISS):
     Returns:
         list: A list of similar responses.
     """
-    similar_response = db.similarity_search(query, k=30)
+    similar_response = db.similarity_search(query, k=25)
     return similar_response
 
 
@@ -148,9 +171,12 @@ def main():
     st.write(f"Powered by Midiacode AI Labs. Versão {VERSION}")
 
     if "my_vectorstore" not in st.session_state:
-        with st.spinner("Carregando PDF..."):
-            print("Extracting text from PDF: ", file_path)
-            text_chunks = extract_from_pdf(file_path)
+        with st.spinner("Carregando base de conhecimento..."):
+            print("Extracting text from PDF: ", PDF_FILE_PATH_SOURCE)
+            text_chunks_from_pdf = extract_from_pdf(PDF_FILE_PATH_SOURCE)
+            print("Extracting text from HTML: ", PAGE_URL_SOURCE)
+            text_chunks_from_html = extract_from_html_page(url=PAGE_URL_SOURCE)
+            text_chunks = text_chunks_from_pdf + text_chunks_from_html
             print("Creating vectorstore...")
             my_vectorstore = create_vectorstore(text_chunks)
             st.session_state.my_vectorstore = my_vectorstore

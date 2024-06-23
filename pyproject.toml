@@ -16,6 +16,7 @@ pdfminer-six = "^20231228"
 langchain-text-splitters = "^0.2.1"
 faiss-cpu = "^1.8.0"
 langchain-openai = "^0.1.8"
+beautifulsoup4 = "^4.12.3"
 
 
 [tool.poetry.group.dev.dependencies]
