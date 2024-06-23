@@ -122,15 +122,18 @@ def generate_response(question: str, my_vectorstore: FAISS):
     response = chain.invoke(inputs)
 
     print("---- Response:")
-    print(response.content)
-    return response.content
+    answer = response.content
+
+    if random.choice(['yes', 'no']) == 'yes':
+        footer_message = "Se preferir, pode acessar nosso site [midiacode.com](https://midiacode.com/) e também solicitar um chat com nossa equipe."
+        answer += "\n\n" + footer_message
+
+    print(answer)
+    return answer
 
 
 def streamed_response(question: str, my_vectorstore: FAISS):
     response = generate_response(question, my_vectorstore)
-    if random.choice(['yes', 'no']) == 'yes':
-        footer_message = "Se preferir, pode acessar nosso site [midiacode.com](https://midiacode.com/) e também solicitar um chat com nossa equipe."
-        response += "\n\n" + footer_message
     for word in response.split():
         yield word + " "
         time.sleep(0.05)
@@ -176,11 +179,12 @@ def main():
         st.session_state.messages.append({"role": "user", "content": prompt})
 
         with st.chat_message("assistant"):
-            answer = streamed_response(prompt, my_vectorstore)
-            response = st.write_stream(answer)
+            # answer = streamed_response(prompt, my_vectorstore)
+            answer = generate_response(prompt, my_vectorstore)
+            response = st.markdown(answer)
             # Add assistant response to chat history
             st.session_state.messages.append(
-                {"role": "assistant", "content": response})
+                {"role": "assistant", "content": answer})
 
 
 st.set_page_config(
