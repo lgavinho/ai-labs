@@ -13,10 +13,11 @@ import random
 
 from prompt_template import get_prompt
 
-# Arquivo PDF com o conteúdo do Midiacode
+
 PDF_FILE_PATH_SOURCE = "2024-MidiacodeTextRepository.pdf"
 PAGE_URL_SOURCE = "https://ptbr.midiacode.com/2022/02/22/perguntas-frequentes/"
-VERSION = '0.0.3'
+LLM_MODEL = "gpt-3.5-turbo-0125"
+VERSION = '0.0.4'
 
 
 def split_paragraphs(rawText):
@@ -130,7 +131,7 @@ def generate_response(question: str, my_vectorstore: FAISS):
     """
 
     print("Creating LLM chain...")
-    llm = ChatOpenAI(temperature=0, model="gpt-3.5-turbo-16k-0613")
+    llm = ChatOpenAI(temperature=0, model=LLM_MODEL)
     prompt = get_prompt()
     chain = prompt | llm
 
