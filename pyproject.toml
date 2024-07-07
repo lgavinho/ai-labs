@@ -17,6 +17,8 @@ langchain-text-splitters = "^0.2.1"
 faiss-cpu = "^1.8.0"
 langchain-openai = "^0.1.8"
 beautifulsoup4 = "^4.12.3"
+opensearch-py = "^2.6.0"
+requests-aws4auth = "^1.2.3"
 
 
 [tool.poetry.group.dev.dependencies]
