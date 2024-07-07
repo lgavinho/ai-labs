@@ -3,67 +3,67 @@ import time
 from langchain_community.vectorstores import FAISS
 
 from ai_generator import AIGenerator
-from settings import DALLE_MODEL_VERSION, EMBEDDING_MODEL_VERSION, LLM_MODEL
-from utils import extract_from_html_page, extract_from_pdf
+from prompt_template import prompt_template
+from settings import DALLE_MODEL_VERSION, EMBEDDING_MODEL_VERSION, LLM_MODEL, MIDIACODE_LOGO_URL, SOURCE_UUID
 from vector_db import VectorDatabase
 
 
-PDF_FILE_PATH_SOURCE = "2024-MidiacodeTextRepository.pdf"
-PAGE_URL_SOURCE = "https://ptbr.midiacode.com/2022/02/22/perguntas-frequentes/"
-VERSION = '0.0.6'
+VERSION = '0.0.7'
 
 ai = AIGenerator()
+db = VectorDatabase()
 
 def streamed_response(question: str, my_vectorstore: FAISS):    
     response = ai.create_text_response(question, my_vectorstore)
     for word in response.split():
         yield word + " "
         time.sleep(0.5)
-        
-        
-def create_vector_database():    
-    print("Extracting text from PDF: ", PDF_FILE_PATH_SOURCE)
-    text_chunks_from_pdf = extract_from_pdf(PDF_FILE_PATH_SOURCE)
-    print("Extracting text from HTML: ", PAGE_URL_SOURCE)
-    text_chunks_from_html = extract_from_html_page(url=PAGE_URL_SOURCE)
-    text_chunks = text_chunks_from_pdf + text_chunks_from_html
-    print("Creating vectorstore...")
-    db = VectorDatabase()
-    my_vectorstore = db.create_vectorstore(text_chunks)
-    st.session_state.midiacode_vectorstore = my_vectorstore
-    print("Vectorstore created.")
-    st.caption(f"Cost estimate: {db.price_usage:.6f} USD for this knowledge base.")
 
         
 def main():
     """
     Main function to run the Midiacode Chatbot.
     """
-
+    
     st.title(f"Midiacode Chatbot")
+    st.logo(MIDIACODE_LOGO_URL, link="https://midiacode.com/")
     st.write(f"Powered by Midiacode AI Labs. Version {VERSION}")
     st.caption(
         f"Models: {LLM_MODEL}, {DALLE_MODEL_VERSION}, {EMBEDDING_MODEL_VERSION}")
+    
+    if "total_cost" not in st.session_state:
+        st.session_state.total_cost = 0.0
 
     if "midiacode_vectorstore" not in st.session_state:
-        with st.spinner("Carregando base de conhecimento do Midiacode..."):
-            create_vector_database()
-
-    my_vectorstore = st.session_state.midiacode_vectorstore
+        print("Loading vectorstore...")
+        with st.spinner("Loading Midiacode knowledge base..."):
+            faiss_index = db.get_or_create_vectorstore(SOURCE_UUID)
+            st.session_state.midiacode_vectorstore = faiss_index
+            print("Vectorstore created.")
+            st.caption(
+                f":money_with_wings: Cost estimate: {db.price_usage:.6f} USD for this knowledge base.")
+            st.session_state.total_cost += db.price_usage
 
     # Initialize chat history
     if "messages" not in st.session_state:
         st.session_state.messages = []
         
     generate_image = st.toggle("AI Image Creator", False)
-
-    with st.chat_message("assistant"):
-        st.write("How can I help you?")
+    
+    st.sidebar.header("Prompt Template")
+    st.sidebar.write(prompt_template)
 
     # Display chat messages from history on app rerun
+    new_history = True
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
+            new_history = False
+
+    if new_history:    
+        print("No chat history found.")
+        with st.chat_message("assistant"):
+            st.markdown("How can I help you?")
 
     # React to user input
     if prompt := st.chat_input("Write here..."):
@@ -78,14 +78,21 @@ def main():
                 image_url = ai.create_image(prompt, size="256x256")
                 print("Image URL: ", image_url)
                 st.image(image_url, use_column_width=True)
-                st.caption(f"Cost estimate: {ai.last_price_usage:.6f} USD")
+                st.caption(
+                    f":money_with_wings: Cost estimate for this interaction: {ai.last_price_usage:.6f} USD")
+                st.session_state.total_cost += ai.last_price_usage
             else:
-                answer = ai.create_text_response(prompt, my_vectorstore)
+                answer = ai.create_text_response(
+                    prompt, st.session_state.midiacode_vectorstore)
                 response = st.markdown(answer)                
                 # Add assistant response to chat history
                 st.session_state.messages.append(
                     {"role": "assistant", "content": answer})
-                st.caption(f"Cost estimate: {ai.last_price_usage:.6f} USD")
+                st.caption(
+                    f":money_with_wings: Cost estimate for this interaction: {ai.last_price_usage:.6f} USD")
+                st.session_state.total_cost += ai.last_price_usage
+            st.caption(
+                f":moneybag: Total cost estimate in this session: {st.session_state.total_cost:.6f} USD")
 
 
 st.set_page_config(
