@@ -1,3 +1,6 @@
+from typing import Tuple
+import requests
+from openai import OpenAI
 import streamlit as st
 import re
 from PyPDF2 import PdfReader
@@ -17,8 +20,10 @@ from prompt_template import get_prompt
 PDF_FILE_PATH_SOURCE = "2024-MidiacodeTextRepository.pdf"
 PAGE_URL_SOURCE = "https://ptbr.midiacode.com/2022/02/22/perguntas-frequentes/"
 LLM_MODEL = "gpt-3.5-turbo-0125"
-VERSION = '0.0.4'
+VERSION = '0.0.5'
 
+DALLE_MODEL_VERSION = "dall-e-2"
+OPEN_AI_DALLE_PRICE_PER_IMAGE_256X256 = 0.016
 
 def split_paragraphs(rawText):
     """
@@ -119,7 +124,7 @@ def retrieve_context(query: str, db: FAISS):
     return similar_response
 
 
-def generate_response(question: str, my_vectorstore: FAISS):
+def create_text_response(question: str, my_vectorstore: FAISS) -> str:
     """
     Generates a response to the given question.
 
@@ -144,23 +149,65 @@ def generate_response(question: str, my_vectorstore: FAISS):
         "custom_content": custom_content
     }
     response = chain.invoke(inputs)
-
-    print("---- Response:")
+    
     answer = response.content
-
     if random.choice(['yes', 'no']) == 'yes':
         footer_message = "Se preferir, pode acessar nosso site [midiacode.com](https://midiacode.com/) e também solicitar um chat com nossa equipe."
         answer += "\n\n" + footer_message
 
     print(answer)
+    
+    # getting usage of tokens
+    total_tokens = 0
+    response_metadata = response.response_metadata
+    if response_metadata:
+        token_usage = response_metadata.get('token_usage')
+        print("Tokens usage: ", token_usage)
+        if token_usage:
+            total_tokens = token_usage.get('total_tokens')
+    
     return answer
 
 
 def streamed_response(question: str, my_vectorstore: FAISS):
-    response = generate_response(question, my_vectorstore)
+    response, total_tokens = create_text_response(question, my_vectorstore)
     for word in response.split():
         yield word + " "
-        time.sleep(0.05)
+        time.sleep(0.5)
+
+
+def create_image(prompt: str, size="1024x1792", quality="standard"):
+    print("Generating image...")
+    client = OpenAI()
+
+    response = client.images.generate(
+        model=DALLE_MODEL_VERSION,
+        prompt=prompt,
+        size=size,
+        quality=quality,
+        n=1,
+    )
+    print(response)
+    image_url = response.data[0].url
+    return image_url
+
+
+def download_image(url, save_path):
+    try:
+        # Send a GET request to the URL
+        response = requests.get(url)
+        # Check if the request was successful (status code 200)
+        if response.status_code == 200:
+            # Open a file for writing in binary mode
+            with open(save_path, 'wb') as f:
+                # Write the contents of the response (image content) to the file
+                f.write(response.content)
+            print(f"Image downloaded successfully and saved at: {save_path}")
+        else:
+            print(
+                f"Failed to download image. Status code: {response.status_code}")
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
 
 def main():
@@ -169,7 +216,7 @@ def main():
     """
 
     st.title(f"Midiacode Chatbot")
-    st.write(f"Powered by Midiacode AI Labs. Versão {VERSION}")
+    st.write(f"Powered by Midiacode AI Labs. Version {VERSION}")
 
     if "my_vectorstore" not in st.session_state:
         with st.spinner("Carregando base de conhecimento..."):
@@ -188,9 +235,11 @@ def main():
     # Initialize chat history
     if "messages" not in st.session_state:
         st.session_state.messages = []
+        
+    generate_image = st.toggle("AI Image Creator", False)
 
     with st.chat_message("assistant"):
-        st.write("Como posso te ajudar?")
+        st.write("How can I help you?")
 
     # Display chat messages from history on app rerun
     for message in st.session_state.messages:
@@ -198,7 +247,7 @@ def main():
             st.markdown(message["content"])
 
     # React to user input
-    if prompt := st.chat_input("Escreva sua pergunta aqui..."):
+    if prompt := st.chat_input("Write here..."):
         # Display user message in chat message container
         with st.chat_message("user"):
             st.markdown(prompt)
@@ -206,12 +255,17 @@ def main():
         st.session_state.messages.append({"role": "user", "content": prompt})
 
         with st.chat_message("assistant"):
-            # answer = streamed_response(prompt, my_vectorstore)
-            answer = generate_response(prompt, my_vectorstore)
-            response = st.markdown(answer)
-            # Add assistant response to chat history
-            st.session_state.messages.append(
-                {"role": "assistant", "content": answer})
+            if generate_image:                                
+                image_url = create_image(prompt, size="256x256")
+                print("Image URL: ", image_url)
+                st.image(image_url, use_column_width=True)
+            else:
+                answer = create_text_response(prompt, my_vectorstore)
+                response = st.markdown(answer)
+                
+                # Add assistant response to chat history
+                st.session_state.messages.append(
+                    {"role": "assistant", "content": answer})
 
 
 st.set_page_config(
