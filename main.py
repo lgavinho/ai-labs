@@ -43,8 +43,6 @@ def main():
             st.caption(
                 f":money_with_wings: Cost estimate: {db.price_usage:.6f} USD for this knowledge base.")
             st.session_state.total_cost += db.price_usage
-            
-    my_vectorstore = st.session_state.midiacode_vectorstore
 
     # Initialize chat history
     if "messages" not in st.session_state:
@@ -55,13 +53,17 @@ def main():
     st.sidebar.header("Prompt Template")
     st.sidebar.write(prompt_template)
 
-    with st.chat_message("assistant"):
-        st.write("How can I help you?")
-
     # Display chat messages from history on app rerun
+    new_history = True
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
+            new_history = False
+
+    if new_history:    
+        print("No chat history found.")
+        with st.chat_message("assistant"):
+            st.markdown("How can I help you?")
 
     # React to user input
     if prompt := st.chat_input("Write here..."):
@@ -80,7 +82,8 @@ def main():
                     f":money_with_wings: Cost estimate for this interaction: {ai.last_price_usage:.6f} USD")
                 st.session_state.total_cost += ai.last_price_usage
             else:
-                answer = ai.create_text_response(prompt, my_vectorstore)
+                answer = ai.create_text_response(
+                    prompt, st.session_state.midiacode_vectorstore)
                 response = st.markdown(answer)                
                 # Add assistant response to chat history
                 st.session_state.messages.append(
