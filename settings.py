@@ -1,3 +1,4 @@
+MIDIACODE_LOGO_URL = "https://static.midiacode.com/logos/logo-midiacode-main-h.png"
 LLM_MODEL = "gpt-3.5-turbo-0125"
 DALLE_MODEL_VERSION = "dall-e-2"
 EMBEDDING_MODEL_VERSION = "text-embedding-ada-002"

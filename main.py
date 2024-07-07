@@ -3,7 +3,8 @@ import time
 from langchain_community.vectorstores import FAISS
 
 from ai_generator import AIGenerator
-from settings import DALLE_MODEL_VERSION, EMBEDDING_MODEL_VERSION, LLM_MODEL
+from prompt_template import prompt_template
+from settings import DALLE_MODEL_VERSION, EMBEDDING_MODEL_VERSION, LLM_MODEL, MIDIACODE_LOGO_URL
 from utils import extract_from_html_page, extract_from_pdf
 from vector_db import VectorDatabase
 
@@ -41,12 +42,13 @@ def main():
     """
 
     st.title(f"Midiacode Chatbot")
+    st.logo(MIDIACODE_LOGO_URL, link="https://midiacode.com/")
     st.write(f"Powered by Midiacode AI Labs. Version {VERSION}")
     st.caption(
         f"Models: {LLM_MODEL}, {DALLE_MODEL_VERSION}, {EMBEDDING_MODEL_VERSION}")
 
     if "midiacode_vectorstore" not in st.session_state:
-        with st.spinner("Carregando base de conhecimento do Midiacode..."):
+        with st.spinner("Loading Midiacode knowledge base..."):
             create_vector_database()
 
     my_vectorstore = st.session_state.midiacode_vectorstore
@@ -56,6 +58,9 @@ def main():
         st.session_state.messages = []
         
     generate_image = st.toggle("AI Image Creator", False)
+    
+    st.sidebar.header("Prompt Template")
+    st.sidebar.write(prompt_template)
 
     with st.chat_message("assistant"):
         st.write("How can I help you?")

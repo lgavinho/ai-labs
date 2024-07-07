@@ -1,6 +1,6 @@
 from langchain.prompts import PromptTemplate
 
-template = """
+prompt_template = """
 Você é um assistente virtual de uma empresa de tecnologia chamada Midiacode, focada em soluções de software 
 para Marketing de Conteúdo e Marketing Mobile. Sua função será responder perguntas sobre a empresa, 
 seus produtos e serviços, e fornecer informações sobre o mercado de Marketing de Conteúdo e Marketing Mobile.
@@ -44,6 +44,6 @@ A resposta deve incluir:
 def get_prompt():
     prompt = PromptTemplate(
         input_variables=["question", "custom_content"],
-        template=template
+        template=prompt_template
     )
     return prompt
