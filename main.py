@@ -3,14 +3,14 @@ import time
 from langchain_community.vectorstores import FAISS
 
 from ai_generator import AIGenerator
-from settings import DALLE_MODEL_VERSION, LLM_MODEL
+from settings import DALLE_MODEL_VERSION, EMBEDDING_MODEL_VERSION, LLM_MODEL
 from utils import extract_from_html_page, extract_from_pdf
 from vector_db import VectorDatabase
 
 
 PDF_FILE_PATH_SOURCE = "2024-MidiacodeTextRepository.pdf"
 PAGE_URL_SOURCE = "https://ptbr.midiacode.com/2022/02/22/perguntas-frequentes/"
-VERSION = '0.0.5'
+VERSION = '0.0.6'
 
 ai = AIGenerator()
 
@@ -32,9 +32,9 @@ def create_vector_database():
     my_vectorstore = db.create_vectorstore(text_chunks)
     st.session_state.midiacode_vectorstore = my_vectorstore
     print("Vectorstore created.")
+    st.caption(f"Cost estimate: {db.price_usage:.6f} USD for this knowledge base.")
 
         
-
 def main():
     """
     Main function to run the Midiacode Chatbot.
@@ -42,7 +42,8 @@ def main():
 
     st.title(f"Midiacode Chatbot")
     st.write(f"Powered by Midiacode AI Labs. Version {VERSION}")
-    st.caption(f"Models: {LLM_MODEL}, {DALLE_MODEL_VERSION}")
+    st.caption(
+        f"Models: {LLM_MODEL}, {DALLE_MODEL_VERSION}, {EMBEDDING_MODEL_VERSION}")
 
     if "midiacode_vectorstore" not in st.session_state:
         with st.spinner("Carregando base de conhecimento do Midiacode..."):
@@ -77,14 +78,14 @@ def main():
                 image_url = ai.create_image(prompt, size="256x256")
                 print("Image URL: ", image_url)
                 st.image(image_url, use_column_width=True)
-                st.caption(f"Cost estimate: {ai.last_price_usage:.4f} USD")
+                st.caption(f"Cost estimate: {ai.last_price_usage:.6f} USD")
             else:
                 answer = ai.create_text_response(prompt, my_vectorstore)
                 response = st.markdown(answer)                
                 # Add assistant response to chat history
                 st.session_state.messages.append(
                     {"role": "assistant", "content": answer})
-                st.caption(f"Cost estimate: {ai.last_price_usage:.4f} USD")
+                st.caption(f"Cost estimate: {ai.last_price_usage:.6f} USD")
 
 
 st.set_page_config(
