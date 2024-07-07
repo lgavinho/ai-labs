@@ -77,14 +77,14 @@ def main():
                 image_url = ai.create_image(prompt, size="256x256")
                 print("Image URL: ", image_url)
                 st.image(image_url, use_column_width=True)
-                st.markdown(f"Cost estimate: {ai.last_price_usage:.2f} USD")
+                st.caption(f"Cost estimate: {ai.last_price_usage:.4f} USD")
             else:
                 answer = ai.create_text_response(prompt, my_vectorstore)
-                response = st.markdown(answer)
-                
+                response = st.markdown(answer)                
                 # Add assistant response to chat history
                 st.session_state.messages.append(
                     {"role": "assistant", "content": answer})
+                st.caption(f"Cost estimate: {ai.last_price_usage:.4f} USD")
 
 
 st.set_page_config(

@@ -4,7 +4,7 @@ from langchain_community.vectorstores import FAISS
 from langchain_openai import ChatOpenAI
 
 from prompt_template import get_prompt
-from settings import DALLE_MODEL_VERSION, LLM_MODEL, OPEN_AI_DALLE_PRICE_PER_IMAGE_256X256
+from settings import DALLE_MODEL_VERSION, LLM_MODEL, OPEN_AI_DALLE_PRICE_PER_IMAGE_256X256, OPEN_AI_GPT_PRICE_PER_INPUT_TOKEN, OPEN_AI_GPT_PRICE_PER_OUTPUT_TOKEN
 
 
 class AIGenerator:
@@ -59,15 +59,18 @@ class AIGenerator:
 
         print(answer)
 
-        # getting usage of tokens
-        total_tokens = 0
+        # getting usage of tokens       
+        self.last_price_usage = 0 
         response_metadata = response.response_metadata
         if response_metadata:
             token_usage = response_metadata.get('token_usage')
             print("Tokens usage: ", token_usage)
-            if token_usage:
-                total_tokens = token_usage.get('total_tokens')
-
+            if token_usage:                                
+                input_price = token_usage.get('prompt_tokens', 0) * OPEN_AI_GPT_PRICE_PER_INPUT_TOKEN
+                out_price = token_usage.get(
+                    'completion_tokens', 0) * OPEN_AI_GPT_PRICE_PER_OUTPUT_TOKEN
+                self.last_price_usage = input_price + out_price
+                
         return answer
 
     def create_image(self, prompt: str, size="1024x1792", quality="standard"):
