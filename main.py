@@ -33,7 +33,9 @@ def create_vector_database():
     my_vectorstore = db.create_vectorstore(text_chunks)
     st.session_state.midiacode_vectorstore = my_vectorstore
     print("Vectorstore created.")
-    st.caption(f"Cost estimate: {db.price_usage:.6f} USD for this knowledge base.")
+    st.caption(
+        f":money_with_wings: Cost estimate: {db.price_usage:.6f} USD for this knowledge base.")
+    st.session_state.total_cost += db.price_usage
 
         
 def main():
@@ -46,11 +48,14 @@ def main():
     st.write(f"Powered by Midiacode AI Labs. Version {VERSION}")
     st.caption(
         f"Models: {LLM_MODEL}, {DALLE_MODEL_VERSION}, {EMBEDDING_MODEL_VERSION}")
+    
+    if "total_cost" not in st.session_state:
+        st.session_state.total_cost = 0.0
 
     if "midiacode_vectorstore" not in st.session_state:
         with st.spinner("Loading Midiacode knowledge base..."):
             create_vector_database()
-
+            
     my_vectorstore = st.session_state.midiacode_vectorstore
 
     # Initialize chat history
@@ -83,14 +88,20 @@ def main():
                 image_url = ai.create_image(prompt, size="256x256")
                 print("Image URL: ", image_url)
                 st.image(image_url, use_column_width=True)
-                st.caption(f"Cost estimate: {ai.last_price_usage:.6f} USD")
+                st.caption(
+                    f":money_with_wings: Cost estimate for this interaction: {ai.last_price_usage:.6f} USD")
+                st.session_state.total_cost += ai.last_price_usage
             else:
                 answer = ai.create_text_response(prompt, my_vectorstore)
                 response = st.markdown(answer)                
                 # Add assistant response to chat history
                 st.session_state.messages.append(
                     {"role": "assistant", "content": answer})
-                st.caption(f"Cost estimate: {ai.last_price_usage:.6f} USD")
+                st.caption(
+                    f":money_with_wings: Cost estimate for this interaction: {ai.last_price_usage:.6f} USD")
+                st.session_state.total_cost += ai.last_price_usage
+            st.caption(
+                f":moneybag: Total cost estimate in this session: {st.session_state.total_cost:.6f} USD")
 
 
 st.set_page_config(

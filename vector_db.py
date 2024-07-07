@@ -49,3 +49,6 @@ class VectorDatabase:
                                 for chunk in text_chunks)
         self.price_usage = self.calculate_cost(self.total_tokens)
         return store
+
+
+    
