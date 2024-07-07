@@ -49,6 +49,8 @@ To run the project, follow these steps:
 
    ```shell
    export OPENAI_API_KEY={add your api key}
+   export AWS_ACCESS_KEY={add AWS Access Key}
+   export AWS_SECRET_KEY={add AWS Secret Key}
    ```
 
 2. Run the main script using Streamlit:

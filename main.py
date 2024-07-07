@@ -4,45 +4,27 @@ from langchain_community.vectorstores import FAISS
 
 from ai_generator import AIGenerator
 from prompt_template import prompt_template
-from settings import DALLE_MODEL_VERSION, EMBEDDING_MODEL_VERSION, LLM_MODEL, MIDIACODE_LOGO_URL
-from utils import extract_from_html_page, extract_from_pdf
+from settings import DALLE_MODEL_VERSION, EMBEDDING_MODEL_VERSION, LLM_MODEL, MIDIACODE_LOGO_URL, SOURCE_UUID
 from vector_db import VectorDatabase
 
 
-PDF_FILE_PATH_SOURCE = "2024-MidiacodeTextRepository.pdf"
-PAGE_URL_SOURCE = "https://ptbr.midiacode.com/2022/02/22/perguntas-frequentes/"
-VERSION = '0.0.6'
+VERSION = '0.0.7'
 
 ai = AIGenerator()
+db = VectorDatabase()
 
 def streamed_response(question: str, my_vectorstore: FAISS):    
     response = ai.create_text_response(question, my_vectorstore)
     for word in response.split():
         yield word + " "
         time.sleep(0.5)
-        
-        
-def create_vector_database():    
-    print("Extracting text from PDF: ", PDF_FILE_PATH_SOURCE)
-    text_chunks_from_pdf = extract_from_pdf(PDF_FILE_PATH_SOURCE)
-    print("Extracting text from HTML: ", PAGE_URL_SOURCE)
-    text_chunks_from_html = extract_from_html_page(url=PAGE_URL_SOURCE)
-    text_chunks = text_chunks_from_pdf + text_chunks_from_html
-    print("Creating vectorstore...")
-    db = VectorDatabase()
-    my_vectorstore = db.create_vectorstore(text_chunks)
-    st.session_state.midiacode_vectorstore = my_vectorstore
-    print("Vectorstore created.")
-    st.caption(
-        f":money_with_wings: Cost estimate: {db.price_usage:.6f} USD for this knowledge base.")
-    st.session_state.total_cost += db.price_usage
 
         
 def main():
     """
     Main function to run the Midiacode Chatbot.
     """
-
+    
     st.title(f"Midiacode Chatbot")
     st.logo(MIDIACODE_LOGO_URL, link="https://midiacode.com/")
     st.write(f"Powered by Midiacode AI Labs. Version {VERSION}")
@@ -53,8 +35,14 @@ def main():
         st.session_state.total_cost = 0.0
 
     if "midiacode_vectorstore" not in st.session_state:
+        print("Loading vectorstore...")
         with st.spinner("Loading Midiacode knowledge base..."):
-            create_vector_database()
+            faiss_index = db.get_or_create_vectorstore(SOURCE_UUID)
+            st.session_state.midiacode_vectorstore = faiss_index
+            print("Vectorstore created.")
+            st.caption(
+                f":money_with_wings: Cost estimate: {db.price_usage:.6f} USD for this knowledge base.")
+            st.session_state.total_cost += db.price_usage
             
     my_vectorstore = st.session_state.midiacode_vectorstore
 
