@@ -75,7 +75,7 @@ def main():
 
         with st.chat_message("assistant"):
             if generate_image:                                
-                image_url = ai.create_image(prompt, size="256x256")
+                image_url = ai.create_image(prompt, size="1024x1024")
                 print("Image URL: ", image_url)
                 st.image(image_url, use_column_width=True)
                 st.caption(

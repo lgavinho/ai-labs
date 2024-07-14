@@ -1,9 +1,9 @@
 MIDIACODE_LOGO_URL = "https://static.midiacode.com/logos/logo-midiacode-main-h.png"
 LLM_MODEL = "gpt-3.5-turbo-0125"
-DALLE_MODEL_VERSION = "dall-e-2"
+DALLE_MODEL_VERSION = "dall-e-3"
 EMBEDDING_MODEL_VERSION = "text-embedding-ada-002"
 OPEN_AI_EMBEDDING_PRICE_PER_TOKEN = 0.10/1000000
-OPEN_AI_DALLE_PRICE_PER_IMAGE_256X256 = 0.016
+OPEN_AI_DALLE_PRICE_PER_IMAGE_256X256 = 0.040
 OPEN_AI_GPT_PRICE_PER_INPUT_TOKEN = 0.50/1000000
 OPEN_AI_GPT_PRICE_PER_OUTPUT_TOKEN = 1.50/1000000
 # always change the UUID when you change or update the source document
