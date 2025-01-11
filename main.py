@@ -8,7 +8,7 @@ from settings import DALLE_MODEL_VERSION, EMBEDDING_MODEL_VERSION, LLM_MODEL, MI
 from vector_db import VectorDatabase
 
 
-VERSION = '0.0.8'
+VERSION = '0.0.9'
 
 ai = AIGenerator()
 db = VectorDatabase()
