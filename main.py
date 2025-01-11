@@ -8,7 +8,7 @@ from settings import DALLE_MODEL_VERSION, EMBEDDING_MODEL_VERSION, LLM_MODEL, MI
 from vector_db import VectorDatabase
 
 
-VERSION = '0.0.7'
+VERSION = '0.0.8'
 
 ai = AIGenerator()
 db = VectorDatabase()
@@ -75,7 +75,7 @@ def main():
 
         with st.chat_message("assistant"):
             if generate_image:                                
-                image_url = ai.create_image(prompt, size="256x256")
+                image_url = ai.create_image(prompt, size="1024x1024")
                 print("Image URL: ", image_url)
                 st.image(image_url, use_column_width=True)
                 st.caption(
