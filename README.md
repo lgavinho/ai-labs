@@ -7,6 +7,23 @@ The `main.py` file contains two functions: `generate_response` and `main`. The `
 
 This project use the PDF file abount Midiacode company as context.
 
+## Tech Stack
+
+This project uses the following technologies and packages:
+
+### Core Technologies
+- Python 3.11.4
+- Poetry (Package Management)
+- Streamlit (Web Interface)
+
+### AI/ML Packages
+- OpenAI API
+- LangChain
+
+### Storage & Vector Databases
+- Pinecone
+- FAISS
+
 ## Local Setup
 
 To set up the project locally, follow these steps:
@@ -51,6 +68,7 @@ To run the project, follow these steps:
    export OPENAI_API_KEY={add your api key}
    export AWS_ACCESS_KEY={add AWS Access Key}
    export AWS_SECRET_KEY={add AWS Secret Key}
+   export PINECONE_API_KEY={add Pinecone API Key}
    ```
 
 2. Run the main script using Streamlit:
