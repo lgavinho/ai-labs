@@ -1,6 +1,6 @@
 import os
 
-
+CONTENT_SPOT_BASE_URL = "https://contentspot.midiacode.pt"
 MIDIACODE_LOGO_URL = "https://static.midiacode.com/logos/logo-midiacode-main-h.png"
 LLM_MODEL = "gpt-4o-mini-2024-07-18"
 DALLE_MODEL_VERSION = "dall-e-3"
