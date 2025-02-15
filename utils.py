@@ -1,9 +1,11 @@
+import streamlit as st
 import requests
 import re
 from PyPDF2 import PdfReader
 from bs4 import BeautifulSoup
 from langchain_text_splitters import CharacterTextSplitter
 from streamlit.logger import get_logger
+import settings
 
 logger = get_logger(__name__)
 
@@ -82,3 +84,11 @@ def download_image(url, save_path):
             logger.error("Failed to download image. Status code: %d", response.status_code)
     except Exception as e:
         logger.error("An error occurred: %s", e)
+
+def add_sidebar():
+    with st.sidebar:    
+        st.header("Sobre")
+        st.write(f"Versão {settings.VERSION}")    
+        st.caption(f"Modelos: {settings.LLM_MODEL}, {settings.DALLE_MODEL_VERSION}, {settings.EMBEDDING_MODEL_VERSION}")
+        st.caption(f":moneybag: Custo da sessão: {st.session_state.total_cost:.6f} USD")
+        st.write("Copyright Midiacode Lda")    
