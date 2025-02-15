@@ -5,14 +5,12 @@ from pinecone.grpc import PineconeGRPC as Pinecone
 from pinecone import ServerlessSpec
 from ai_generator import AIGenerator
 from prompt_template import prompt_template
-from settings import DALLE_MODEL_VERSION, EMBEDDING_MODEL_VERSION, LLM_MODEL, MIDIACODE_LOGO_URL, SOURCE_UUID
+import settings
 from vector_db import VectorDatabase
 from vector_db_remote import VectorRemoteDatabase
 from streamlit.logger import get_logger
 
 logger = get_logger(__name__)
-
-VERSION = '0.0.11'
 
 ai = AIGenerator()
 db = VectorRemoteDatabase()
@@ -30,10 +28,10 @@ def main():
     """
     
     st.title(f"Midiacode Chat")
-    st.logo(MIDIACODE_LOGO_URL, link="https://midiacode.com/")
-    st.write(f"Desenvolvido por Midiacode AI Labs. Versão {VERSION}")
+    st.logo(settings.MIDIACODE_LOGO_URL, link="https://midiacode.com/")
+    st.write(f"Desenvolvido por Midiacode AI Labs. Versão {settings.VERSION}")
     st.caption(
-        f"Modelos: {LLM_MODEL}, {DALLE_MODEL_VERSION}, {EMBEDDING_MODEL_VERSION}")
+        f"Modelos: {settings.LLM_MODEL}, {settings.DALLE_MODEL_VERSION}, {settings.EMBEDDING_MODEL_VERSION}")
     
     if "total_cost" not in st.session_state:
         st.session_state.total_cost = 0.0
@@ -41,7 +39,7 @@ def main():
     if "midiacode_vectorstore" not in st.session_state:
         logger.info("Carregando base de conhecimento...")
         with st.spinner("Carregando base de conhecimento Midiacode..."):
-            vector_index = db.get_or_create_vectorstore(SOURCE_UUID)
+            vector_index = db.get_or_create_vectorstore(settings.SOURCE_UUID)
             st.session_state.midiacode_vectorstore = vector_index
             logger.info("Base de conhecimento criada.")
             st.caption(
@@ -58,6 +56,7 @@ def main():
     st.sidebar.write(prompt_template)
 
     assistant_avatar = "robot_dog.png" 
+    user_avatar = "anonimous.png"
 
     # Display chat messages from history on app rerun
     new_history = True
@@ -73,7 +72,7 @@ def main():
 
     if prompt := st.chat_input("Escreva aqui..."):
         # Display user message in chat message container
-        with st.chat_message("user"):
+        with st.chat_message("user", avatar=user_avatar):
             st.markdown(prompt)
         # Add user message to chat history
         st.session_state.messages.append({"role": "user", "content": prompt})
@@ -87,19 +86,26 @@ def main():
                     f":money_with_wings: Custo estimado para esta interação: {ai.last_price_usage:.6f} USD")
                 st.session_state.total_cost += ai.last_price_usage
             else:
-                # for Pinecone VectorRemoteDatabase use ai.create_text_response_with_remote_db
-                # for local VectorDatabase use ai.create_text_response()
+                # Show thinking message
+                # Show thinking message with animation
+                thinking_placeholder = st.empty()
+                thinking_placeholder.markdown(settings.THINKING_ANIMATION, unsafe_allow_html=True)
+                
+                # Generate response
                 answer = ai.create_text_response_with_remote_db(
-                    prompt, st.session_state.midiacode_vectorstore, source_id=SOURCE_UUID)                
+                    prompt, st.session_state.midiacode_vectorstore, source_id=settings.SOURCE_UUID)                
+                
+                # Replace thinking message with actual response
+                thinking_placeholder.empty()
                 response = st.markdown(answer)                
                 # Add assistant response to chat history
                 st.session_state.messages.append(
                     {"role": "assistant", "content": answer})
-                st.caption(
-                    f":money_with_wings: Custo estimado para esta interação: {ai.last_price_usage:.6f} USD")
-                st.session_state.total_cost += ai.last_price_usage
             st.caption(
-                f":moneybag: Custo total estimado nesta sessão: {st.session_state.total_cost:.6f} USD")
+                f":money_with_wings: Custo estimado para esta interação: {ai.last_price_usage:.6f} USD")
+            st.session_state.total_cost += ai.last_price_usage
+        st.caption(
+            f":moneybag: Custo total estimado nesta sessão: {st.session_state.total_cost:.6f} USD")
 
 st.set_page_config(
     layout="centered", 
