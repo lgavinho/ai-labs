@@ -1,23 +1,25 @@
 import streamlit as st
 import time
 from langchain_community.vectorstores import FAISS
-
+from pinecone.grpc import PineconeGRPC as Pinecone
+from pinecone import ServerlessSpec
 from ai_generator import AIGenerator
 from prompt_template import prompt_template
 from settings import DALLE_MODEL_VERSION, EMBEDDING_MODEL_VERSION, LLM_MODEL, MIDIACODE_LOGO_URL, SOURCE_UUID
 from vector_db import VectorDatabase
+from vector_db_remote import VectorRemoteDatabase
 
 
-VERSION = '0.0.10'
+VERSION = '0.0.11'
 
 ai = AIGenerator()
-db = VectorDatabase()
+db = VectorRemoteDatabase()
 
-def streamed_response(question: str, my_vectorstore: FAISS):    
-    response = ai.create_text_response(question, my_vectorstore)
-    for word in response.split():
-        yield word + " "
-        time.sleep(0.5)
+# def streamed_response(question: str, my_vectorstore: FAISS):    
+#     response = ai.create_text_response(question, my_vectorstore)
+#     for word in response.split():
+#         yield word + " "
+#         time.sleep(0.5)
 
         
 def main():
@@ -37,8 +39,8 @@ def main():
     if "midiacode_vectorstore" not in st.session_state:
         print("Loading vectorstore...")
         with st.spinner("Loading Midiacode knowledge base..."):
-            faiss_index = db.get_or_create_vectorstore(SOURCE_UUID)
-            st.session_state.midiacode_vectorstore = faiss_index
+            vector_index = db.get_or_create_vectorstore(SOURCE_UUID)
+            st.session_state.midiacode_vectorstore = vector_index
             print("Vectorstore created.")
             st.caption(
                 f":money_with_wings: Cost estimate: {db.price_usage:.6f} USD for this knowledge base.")
@@ -82,8 +84,10 @@ def main():
                     f":money_with_wings: Cost estimate for this interaction: {ai.last_price_usage:.6f} USD")
                 st.session_state.total_cost += ai.last_price_usage
             else:
-                answer = ai.create_text_response(
-                    prompt, st.session_state.midiacode_vectorstore)
+                # for Pinecone VectorRemoteDatabase use ai.create_text_response_with_remote_db
+                # for local VectorDatabase use ai.create_text_response()
+                answer = ai.create_text_response_with_remote_db(
+                    prompt, st.session_state.midiacode_vectorstore, source_id=SOURCE_UUID)                
                 response = st.markdown(answer)                
                 # Add assistant response to chat history
                 st.session_state.messages.append(
