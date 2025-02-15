@@ -8,7 +8,9 @@ from prompt_template import prompt_template
 from settings import DALLE_MODEL_VERSION, EMBEDDING_MODEL_VERSION, LLM_MODEL, MIDIACODE_LOGO_URL, SOURCE_UUID
 from vector_db import VectorDatabase
 from vector_db_remote import VectorRemoteDatabase
+from streamlit.logger import get_logger
 
+logger = get_logger(__name__)
 
 VERSION = '0.0.11'
 
@@ -37,11 +39,11 @@ def main():
         st.session_state.total_cost = 0.0
 
     if "midiacode_vectorstore" not in st.session_state:
-        print("Loading vectorstore...")
+        logger.info("Loading vectorstore...")
         with st.spinner("Loading Midiacode knowledge base..."):
             vector_index = db.get_or_create_vectorstore(SOURCE_UUID)
             st.session_state.midiacode_vectorstore = vector_index
-            print("Vectorstore created.")
+            logger.info("Vectorstore created.")
             st.caption(
                 f":money_with_wings: Cost estimate: {db.price_usage:.6f} USD for this knowledge base.")
             st.session_state.total_cost += db.price_usage
@@ -63,7 +65,7 @@ def main():
             new_history = False
 
     if new_history:    
-        print("No chat history found.")
+        logger.info("No chat history found.")
         with st.chat_message("assistant"):
             st.markdown("How can I help you?")
 
@@ -78,7 +80,7 @@ def main():
         with st.chat_message("assistant"):
             if generate_image:                                
                 image_url = ai.create_image(prompt, size="1024x1024")
-                print("Image URL: ", image_url)
+                logger.info("Image URL: %s", image_url)
                 st.image(image_url, use_column_width=True)
                 st.caption(
                     f":money_with_wings: Cost estimate for this interaction: {ai.last_price_usage:.6f} USD")

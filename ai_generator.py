@@ -8,7 +8,10 @@ from pinecone import ServerlessSpec
 
 from prompt_template import get_prompt
 import settings
+from streamlit.logger import get_logger
 
+
+logger = get_logger(__name__)
 
 class AIGenerator:
     
@@ -19,17 +22,7 @@ class AIGenerator:
         self.embeddings = OpenAIEmbeddings(model=settings.EMBEDDING_MODEL_VERSION)
     
     def retrieve_context(self, query: str, db: FAISS):
-        """
-        Retrieves relevant context from a FAISS vector database based on a query.
-
-        Args:
-            query (str): The search query string
-            db (FAISS): The FAISS vector database to search
-
-        Returns:
-            list: List of similar documents/contexts found in the database
-        """
-        print("Retrieving context for question: ", query)
+        logger.info("Retrieving context for question: %s", query)
         similar_response = db.similarity_search(query, k=20)
         return similar_response
 
@@ -43,7 +36,7 @@ class AIGenerator:
             include_metadata=True            
         )        
         if not results.matches:
-            print("No matches found in vector database!!!")
+            logger.warning("No matches found in vector database!!!")
             return None
             
         context_text = "\n".join([match.metadata['text'] for match in results.matches])        
@@ -61,15 +54,15 @@ class AIGenerator:
             str: The generated response.
         """
 
-        print("Creating LLM chain...")
+        logger.info("Creating LLM chain...")
         llm = ChatOpenAI(temperature=0, model=settings.LLM_MODEL)
         prompt = get_prompt()
         chain = prompt | llm
 
-        print("Retrieving context for question: ", question)
+        logger.info("Retrieving context for question: %s", question)
         custom_content = self.retrieve_context(question, my_vectorstore)
 
-        print("Invoking chain...")
+        logger.info("Invoking chain...")
         inputs = {
             "question": question,
             "custom_content": custom_content
@@ -81,33 +74,32 @@ class AIGenerator:
             footer_message = "Se preferir, pode acessar nosso site [midiacode.com](https://midiacode.com/) e também solicitar um chat com nossa equipe."
             answer += "\n\n" + footer_message
 
-        print(answer)
+        logger.info("Generated answer: %s", answer)
 
         # getting usage of tokens       
         self.last_price_usage = 0 
         response_metadata = response.response_metadata
         if response_metadata:
             token_usage = response_metadata.get('token_usage')
-            print("Tokens usage: ", token_usage)
+            logger.info("Tokens usage: %s", token_usage)
             if token_usage:                                
                 input_price = token_usage.get('prompt_tokens', 0) * settings.OPEN_AI_GPT_PRICE_PER_INPUT_TOKEN
                 out_price = token_usage.get(
                     'completion_tokens', 0) * settings.OPEN_AI_GPT_PRICE_PER_OUTPUT_TOKEN
                 self.last_price_usage = input_price + out_price
-                
         return answer
 
     def create_text_response_with_remote_db(self, question: str, my_vectorstore, source_id: str) -> str:
         # TODO use doc id to retrieve context from different names
-        print("Creating LLM chain...")
+        logger.info("Creating LLM chain...")
         llm = ChatOpenAI(temperature=0, model=settings.LLM_MODEL)
         prompt = get_prompt()
         chain = prompt | llm
 
-        print("Retrieving context for question: ", question)
+        logger.info("Retrieving context for question: %s", question)
         custom_content = self.retrieve_context_from_remote(question, my_vectorstore, source_id)
 
-        print("Invoking chain...")
+        logger.info("Invoking chain...")
         inputs = {
             "question": question,
             "custom_content": custom_content
@@ -119,24 +111,25 @@ class AIGenerator:
             footer_message = "Se preferir, pode acessar nosso site [midiacode.com](https://midiacode.com/) e também solicitar um chat com nossa equipe."
             answer += "\n\n" + footer_message
 
-        print(answer)
+        logger.info("Generated answer: %s", answer)
 
         # getting usage of tokens       
         self.last_price_usage = 0 
         response_metadata = response.response_metadata
         if response_metadata:
             token_usage = response_metadata.get('token_usage')
-            print("Tokens usage: ", token_usage)
+            logger.info("Tokens usage: %s", token_usage)
             if token_usage:                                
                 input_price = token_usage.get('prompt_tokens', 0) * settings.OPEN_AI_GPT_PRICE_PER_INPUT_TOKEN
                 out_price = token_usage.get(
                     'completion_tokens', 0) * settings.OPEN_AI_GPT_PRICE_PER_OUTPUT_TOKEN
                 self.last_price_usage = input_price + out_price
-                
-        return answer        
+
+        return answer
+    
 
     def create_image(self, prompt: str, size="1024x1792", quality="standard"):
-        print("Generating image...")
+        logger.info("Generating image...")
         client = OpenAI()
 
         response = client.images.generate(
@@ -146,7 +139,7 @@ class AIGenerator:
             quality=quality,
             n=1,
         )
-        print(response)
+        logger.info("Image generation response: %s", response)
         image_url = response.data[0].url
         
         self.last_price_usage = settings.OPEN_AI_DALLE_PRICE_PER_IMAGE_256X256

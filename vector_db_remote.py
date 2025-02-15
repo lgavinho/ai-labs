@@ -14,6 +14,10 @@ from pinecone import Pinecone, ServerlessSpec
 import tiktoken
 import settings
 from utils import extract_from_html_page, extract_from_pdf
+from streamlit.logger import get_logger
+
+
+logger = get_logger(__name__)
 
 
 class VectorRemoteDatabase:
@@ -35,14 +39,14 @@ class VectorRemoteDatabase:
     def create_index_if_not_exist(self): 
         try:
             index_data = self.pinecone.describe_index(self.index_name)
-            print(index_data)     
+            logger.info(index_data)     
             if index_data and index_data['status']['ready']:
-                print("Index already exists.")
+                logger.info("Index already exists.")
                 return True
         except Exception as e:
-            print(f"Error: {e}")
+            logger.error(f"Error: {e}")
             
-        print(f"Index {self.index_name} does not exist. Creating...")
+        logger.info(f"Index {self.index_name} does not exist. Creating...")
         self.pinecone.create_index(
             name=self.index_name,
             dimension=settings.EMBEDDING_MODEL_DIMENSION, 
@@ -52,7 +56,7 @@ class VectorRemoteDatabase:
                 region="us-east-1"
             ) 
         )
-        print("Index created.") 
+        logger.info("Index created.") 
         return True       
             
                         
@@ -89,46 +93,46 @@ class VectorRemoteDatabase:
         self.price_usage = 0        
         vector_index = self.get_pinecone_index()
                 
-        print(f"Getting vectorstore for namespace: {doc_uuid}")
+        logger.info("Getting vectorstore for namespace: %s", doc_uuid)
         if self.namespace_exists(namespace=doc_uuid):
-            print(f"Namespace {doc_uuid} already exists.")
+            logger.info("Namespace %s already exists.", doc_uuid)
             return vector_index
 
         text_chunks = self.create_text_chunks_knowledge_base()
-        print("Creating vectorstore...")
+        logger.info("Creating vectorstore...")
         vector_index = self.create_vectorstore(
             doc_uuid=doc_uuid, text_chunks=text_chunks)
         return vector_index
                     
     def create_text_chunks_knowledge_base(self):        
         # merge two sources
-        print("Extracting text from PDF: ", settings.PDF_FILE_PATH_SOURCE)
+        logger.info("Extracting text from PDF: %s", settings.PDF_FILE_PATH_SOURCE)
         text_chunks_from_pdf = extract_from_pdf(settings.PDF_FILE_PATH_SOURCE)
-        print("Extracting text from HTML: ", settings.PAGE_URL_SOURCE)
+        logger.info("Extracting text from HTML: %s", settings.PAGE_URL_SOURCE)
         text_chunks_from_html = extract_from_html_page(url=settings.PAGE_URL_SOURCE)
         text_chunks = text_chunks_from_pdf + text_chunks_from_html
         # texts = [settings.PDF_FILE_PATH_SOURCE, settings.PAGE_URL_SOURCE]
         # metadata_list = [{'text': text} for text in texts]     
-        print("Text chunks: ", len(text_chunks))   
+        logger.info("Text chunks: %d", len(text_chunks))   
         return text_chunks
 
     def get_pinecone_index(self):
         self.create_index_if_not_exist()
         while not self.pinecone.describe_index(self.index_name).status['ready']:
-            print('Index not ready. Waiting...')
+            logger.info('Index not ready. Waiting...')
             time.sleep(1)
         return self.pinecone.Index(self.index_name)
         
     def save_faiss_vectors(self, faiss_index, doc_uuid):
-        print('Saving vectors to pinecone...')        
+        logger.info('Saving vectors to pinecone...')        
         dimension = len(faiss_index.index.reconstruct(0))
-        print('Vector dimension: ', dimension)
+        logger.info('Vector dimension: %d', dimension)
         pinecone_index = self.get_pinecone_index()
 
         # Preparar dados para upsert
         vectors_to_upsert = []
         for i in range(faiss_index.index.ntotal):
-            print(f'Vector {i} of {faiss_index.index.ntotal}')
+            logger.info('Vector %d of %d', i, faiss_index.index.ntotal)
             # Extrair vetor
             vector = faiss_index.index.reconstruct(i).tolist()
             
@@ -138,20 +142,20 @@ class VectorRemoteDatabase:
             metadata = {"text": doc.page_content}
             
             # Usar doc_id como ID no Pinecone (ou gere um único)
-            print(f'Appending vector {i} of {faiss_index.index.ntotal} with id {doc_id}')
+            logger.info('Appending vector %d of %d with id %s', i, faiss_index.index.ntotal, doc_id)
             vectors_to_upsert.append((str(doc_id), vector, metadata))
         
         # Enviar em lotes (ex: 100 vetores por lote)
         batch_size = 100
         for i in range(0, len(vectors_to_upsert), batch_size):
-            print(f'Batch {i} of {len(vectors_to_upsert)}')
+            logger.info('Batch %d of %d', i, len(vectors_to_upsert))
             pinecone_index.upsert(vectors=vectors_to_upsert[i:i+batch_size], namespace=doc_uuid)
                 
-        print('Vectors successfully saved in pinecone.')
+        logger.info('Vectors successfully saved in pinecone.')
         return pinecone_index
 
     def namespace_exists(self, namespace: str) -> bool:        
         index = self.get_pinecone_index()
         stats = index.describe_index_stats()
-        print(stats)
+        logger.info(stats)
         return namespace in stats['namespaces']
