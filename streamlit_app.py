@@ -10,11 +10,15 @@ st.set_page_config(
 
 st.logo(settings.MIDIACODE_LOGO_URL, link="https://midiacode.com/")
 
-home_page = st.Page("pages/home.py", title="Midiacode Chat", icon=":material/robot:")
+home_page = st.Page("pages/home.py", title="Midiacode Chat", icon=":material/chat:")
 qrcode_page = st.Page("pages/qr.py", title="QR Code Chat", icon=":material/qr_code:")
 pg = st.navigation([
     home_page,
     qrcode_page
 ])
+
+if "total_cost" not in st.session_state:
+    st.session_state.total_cost = 0.0
+
 
 pg.run()

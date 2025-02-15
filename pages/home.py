@@ -29,9 +29,6 @@ with st.sidebar:
         st.write(prompt_template)
 add_sidebar()
 
-if "total_cost" not in st.session_state:
-    st.session_state.total_cost = 0.0
-
 if "midiacode_vectorstore" not in st.session_state:
     logger.info("Carregando base de conhecimento...")
     with st.spinner("Carregando base de conhecimento Midiacode..."):
@@ -87,7 +84,6 @@ if prompt := st.chat_input("Escreva aqui..."):
                 f":money_with_wings: Custo estimado para esta interação: {ai.last_price_usage:.6f} USD")
             st.session_state.total_cost += ai.last_price_usage
         else:
-            # Show thinking message
             # Show thinking message with animation
             thinking_placeholder = st.empty()
             thinking_placeholder.markdown(settings.THINKING_ANIMATION, unsafe_allow_html=True)

@@ -26,6 +26,7 @@ class ContentSpotService:
         try:
             querystring = {"code": code}
             url = f"{self.base_url}/content/"
+            logger.info(f"GET {url}?{querystring}")
             response = requests.get(
                 url,
                 headers=self.headers,
@@ -33,6 +34,7 @@ class ContentSpotService:
             )
             
             if response.status_code == 200:
+                logger.info("Content retrieved successfully")
                 return response.json()
             else:
                 logger.error("Failed to get content. Status code: %d", response.status_code)
