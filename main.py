@@ -26,10 +26,10 @@ db = VectorRemoteDatabase()
         
 def main():
     """
-    Main function to run the Midiacode Chatbot.
+    Main function to run the Midiacode Chat.
     """
     
-    st.title(f"Midiacode Chatbot")
+    st.title(f"Midiacode Chat")
     st.logo(MIDIACODE_LOGO_URL, link="https://midiacode.com/")
     st.write(f"Desenvolvido por Midiacode AI Labs. Versão {VERSION}")
     st.caption(
@@ -102,7 +102,11 @@ def main():
                 f":moneybag: Custo total estimado nesta sessão: {st.session_state.total_cost:.6f} USD")
 
 st.set_page_config(
-    layout="centered", page_title="Chatbot Midiacode", page_icon=":robot:")
+    layout="centered", 
+    page_title="Midiacode Chat", 
+    page_icon=":robot:",
+    initial_sidebar_state="collapsed"  # Add this parameter
+)
 
 
 if __name__ == "__main__":
