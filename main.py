@@ -31,59 +31,60 @@ def main():
     
     st.title(f"Midiacode Chatbot")
     st.logo(MIDIACODE_LOGO_URL, link="https://midiacode.com/")
-    st.write(f"Powered by Midiacode AI Labs. Version {VERSION}")
+    st.write(f"Desenvolvido por Midiacode AI Labs. Versão {VERSION}")
     st.caption(
-        f"Models: {LLM_MODEL}, {DALLE_MODEL_VERSION}, {EMBEDDING_MODEL_VERSION}")
+        f"Modelos: {LLM_MODEL}, {DALLE_MODEL_VERSION}, {EMBEDDING_MODEL_VERSION}")
     
     if "total_cost" not in st.session_state:
         st.session_state.total_cost = 0.0
 
     if "midiacode_vectorstore" not in st.session_state:
-        logger.info("Loading vectorstore...")
-        with st.spinner("Loading Midiacode knowledge base..."):
+        logger.info("Carregando base de conhecimento...")
+        with st.spinner("Carregando base de conhecimento Midiacode..."):
             vector_index = db.get_or_create_vectorstore(SOURCE_UUID)
             st.session_state.midiacode_vectorstore = vector_index
-            logger.info("Vectorstore created.")
+            logger.info("Base de conhecimento criada.")
             st.caption(
-                f":money_with_wings: Cost estimate: {db.price_usage:.6f} USD for this knowledge base.")
+                f":money_with_wings: Custo estimado: {db.price_usage:.6f} USD para esta base de conhecimento.")
             st.session_state.total_cost += db.price_usage
 
     # Initialize chat history
     if "messages" not in st.session_state:
         st.session_state.messages = []
         
-    generate_image = st.toggle("AI Image Creator", False)
+    generate_image = st.toggle("Criador de Imagens IA", False)
     
-    st.sidebar.header("Prompt Template")
+    st.sidebar.header("Template do Prompt")
     st.sidebar.write(prompt_template)
+
+    assistant_avatar = "robot_dog.png" 
 
     # Display chat messages from history on app rerun
     new_history = True
-    for message in st.session_state.messages:
+    for message in st.session_state.messages:        
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
             new_history = False
 
     if new_history:    
-        logger.info("No chat history found.")
-        with st.chat_message("assistant"):
-            st.markdown("How can I help you?")
+        logger.info("Nenhum histórico de chat encontrado.")
+        with st.chat_message("assistant", avatar=assistant_avatar):
+            st.markdown("Como posso ajudar hoje?")
 
-    # React to user input
-    if prompt := st.chat_input("Write here..."):
+    if prompt := st.chat_input("Escreva aqui..."):
         # Display user message in chat message container
         with st.chat_message("user"):
             st.markdown(prompt)
         # Add user message to chat history
         st.session_state.messages.append({"role": "user", "content": prompt})
 
-        with st.chat_message("assistant"):
+        with st.chat_message("assistant", avatar=assistant_avatar):
             if generate_image:                                
                 image_url = ai.create_image(prompt, size="1024x1024")
-                logger.info("Image URL: %s", image_url)
-                st.image(image_url, use_column_width=True)
+                logger.info("URL da Imagem: %s", image_url)
+                st.image(image_url, use_container_width=True)
                 st.caption(
-                    f":money_with_wings: Cost estimate for this interaction: {ai.last_price_usage:.6f} USD")
+                    f":money_with_wings: Custo estimado para esta interação: {ai.last_price_usage:.6f} USD")
                 st.session_state.total_cost += ai.last_price_usage
             else:
                 # for Pinecone VectorRemoteDatabase use ai.create_text_response_with_remote_db
@@ -95,14 +96,13 @@ def main():
                 st.session_state.messages.append(
                     {"role": "assistant", "content": answer})
                 st.caption(
-                    f":money_with_wings: Cost estimate for this interaction: {ai.last_price_usage:.6f} USD")
+                    f":money_with_wings: Custo estimado para esta interação: {ai.last_price_usage:.6f} USD")
                 st.session_state.total_cost += ai.last_price_usage
             st.caption(
-                f":moneybag: Total cost estimate in this session: {st.session_state.total_cost:.6f} USD")
-
+                f":moneybag: Custo total estimado nesta sessão: {st.session_state.total_cost:.6f} USD")
 
 st.set_page_config(
-    layout="centered", page_title="Midiacode Chatbot", page_icon=":robot:")
+    layout="centered", page_title="Chatbot Midiacode", page_icon=":robot:")
 
 
 if __name__ == "__main__":
