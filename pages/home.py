@@ -1,5 +1,6 @@
 import streamlit as st
 import time
+import random
 from langchain_community.vectorstores import FAISS
 from pinecone.grpc import PineconeGRPC as Pinecone
 from pinecone import ServerlessSpec
@@ -52,8 +53,9 @@ user_avatar = "user.png"
 
 # Display chat messages from history on app rerun
 new_history = True
-for message in st.session_state.messages:        
-    with st.chat_message(message["role"]):
+for message in st.session_state.messages:   
+    avatar = assistant_avatar if message["role"] == "assistant" else user_avatar     
+    with st.chat_message(message["role"], avatar=avatar):
         st.markdown(message["content"])
         new_history = False
 
@@ -67,7 +69,15 @@ if new_history:
             "Quer saber mais sobre nossos serviços, tirar dúvidas sobre funcionalidades ou "
             "explorar como podemos impulsionar seus projetos? Estou aqui para ajudar!"
         ))
-        st.markdown("Como posso auxiliá-lo(a) hoje? 😊")        
+        if random.choice(['yes', 'no']) == 'yes':
+            st.markdown((
+                "Converse com QR Codes da Midiacode! Agora, seus PDFs ganham inteligência: "
+                "crie QR Codes que permitem ao público conversar diretamente com o conteúdo. "
+                "<a href='/qr' target='_self'>Clique aqui</a> e converse agora mesmo com um conteúdo! 🚀 #Inovação #Midiacode"
+            ),
+                unsafe_allow_html=True
+            )
+        st.markdown("Como posso auxiliá-lo(a) hoje? 😊")      
 
 if prompt := st.chat_input("Escreva aqui..."):
     # Display user message in chat message container

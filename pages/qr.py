@@ -41,6 +41,16 @@ params = st.query_params
 short_code = params.get("code", "")
 
 st.title("QR Code Chat")
+with st.sidebar:    
+    with st.expander("Regras"):
+        st.markdown("""
+        - ✅ O conteúdo do QR Code precisa estar publicado na plataforma [Midiacode Studio](https://studio.midiacode.com).
+        - 📄 Somente conteúdo em formato PDF é suportado.
+        - 🌐 O conteúdo deve estar configurado como público.
+        - 🖼️ Imagens dentro do PDF não são processadas.
+        """)
+    with st.expander("Template do Prompt"):
+        st.write(prompt_template_generic)
 add_sidebar()
 
 ai_prompt = PromptTemplate(
@@ -66,7 +76,7 @@ if short_code:
             new_chat()
             
         if content_type == "pdf":
-            source_url = content_data.get("source_url")
+            source_url = content_data.get("source_url")         
             with st.expander(f"{content_title} ({content_type})"):
                 cover_url = content_data.get("cover_url")
                 if cover_url:
@@ -74,7 +84,10 @@ if short_code:
                 qrcode_url = content_data.get("qrcode_url")
                 if qrcode_url:
                     st.image(qrcode_url, width=100)
-                st.write(content_data.get("short_link"))  
+                short_link = content_data.get("short_link", "")
+                if not short_link.startswith(("http://", "https://")):
+                    short_link = f"https://{short_link}"
+                st.markdown(short_link)  
             # Chat             
             vector_store_session_id = f"{short_code}_vectorstore"
             if vector_store_session_id not in st.session_state:
@@ -90,8 +103,7 @@ if short_code:
                 st.caption(
                     f":money_with_wings: Custo estimado: {db.price_usage:.6f} USD para esta base de conhecimento.")
                 st.session_state.total_cost += db.price_usage
-            
-            # TODO Criar a estrutura de conversação com o chatbot
+                        
             # Initialize chat history for this session code
             history_message_id = f"{short_code}_messages"
             if history_message_id not in st.session_state:
