@@ -5,7 +5,34 @@ Use: Open AI model.
 
 The `main.py` file contains two functions: `generate_response` and `main`. The `generate_response` function generates a chatbot response by creating an LLM chain, initializing a `ChatOpenAI` instance, retrieving a prompt, and invoking the chain with the user's question and retrieved context. The `main` function serves as the program's entry point, setting up a Streamlit interface. It collects user input, calls `generate_response` upon clicking "Enviar" (Send), and displays the generated response. In essence, `generate_response` processes the chatbot logic, while `main` handles the user interface.
 
-This project use the PDF file abount Midiacode company as context.
+This project uses PDF files as context, including:
+- Midiacode company documentation
+- Any PDF content published on Midiacode Studio platform (through QR Code Chat feature)
+
+### QR Code Chat Feature
+The application now includes a QR Code Chat feature that allows users to interact with PDF content published on Midiacode Studio. Users can:
+- Access content through Midiacode's short URLs (1mc.co)
+- Chat with AI about the PDF content
+- Get instant responses based on the document's context
+
+All document embeddings are stored in Pinecone vector database for efficient retrieval and persistent storage, enabling fast and accurate responses even with large documents.
+
+## Tech Stack
+
+This project uses the following technologies and packages:
+
+### Core Technologies
+- Python 3.11.4
+- Poetry (Package Management)
+- Streamlit (Web Interface)
+
+### AI/ML Packages
+- OpenAI API
+- LangChain
+
+### Storage & Vector Databases
+- Pinecone
+- FAISS
 
 ## Local Setup
 
@@ -51,6 +78,7 @@ To run the project, follow these steps:
    export OPENAI_API_KEY={add your api key}
    export AWS_ACCESS_KEY={add AWS Access Key}
    export AWS_SECRET_KEY={add AWS Secret Key}
+   export PINECONE_API_KEY={add Pinecone API Key}
    ```
 
 2. Run the main script using Streamlit:

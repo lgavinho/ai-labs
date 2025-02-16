@@ -1,8 +1,15 @@
+import streamlit as st
 import requests
 import re
 from PyPDF2 import PdfReader
 from bs4 import BeautifulSoup
 from langchain_text_splitters import CharacterTextSplitter
+from streamlit.logger import get_logger
+import settings
+import tempfile
+import os
+
+logger = get_logger(__name__)
 
 
 def split_paragraphs(rawText):
@@ -32,21 +39,12 @@ def clean_text(text):
 
 
 def extract_from_pdf(filepath: str):
-    """
-    Extracts text from a PDF file.
-
-    Args:
-        filepath (str): The path to the PDF file.
-
-    Returns:
-        list: A list of text chunks extracted from the PDF.
-    """
     text_chunks = []
     with open(filepath, 'rb') as f:
         reader = PdfReader(f)
-        print("Number of pages: ", len(reader.pages))
+        logger.info("Number of pages: %d", len(reader.pages))
         for i, page in enumerate(reader.pages):
-            print(f"Extracting page {i+1}...")
+            logger.info("Extracting page %d...", i+1)
             raw = page.extract_text()
             cleaned = clean_text(raw)
             chunks = split_paragraphs(cleaned)
@@ -67,10 +65,9 @@ def extract_from_html_page(url: str):
             chunks = split_paragraphs(cleaned)
             return chunks
         else:
-            print(
-                f"Failed to retrieve HTML: Status Code {response.status_code}")
+            logger.error("Failed to retrieve HTML: Status Code %d", response.status_code)
     except requests.exceptions.RequestException as e:
-        print(f"Error fetching URL: {e}")
+        logger.error("Error fetching URL: %s", e)
     return None
 
 
@@ -84,9 +81,55 @@ def download_image(url, save_path):
             with open(save_path, 'wb') as f:
                 # Write the contents of the response (image content) to the file
                 f.write(response.content)
-            print(f"Image downloaded successfully and saved at: {save_path}")
+            logger.info("Image downloaded successfully and saved at: %s", save_path)
         else:
-            print(
-                f"Failed to download image. Status code: {response.status_code}")
+            logger.error("Failed to download image. Status code: %d", response.status_code)
     except Exception as e:
-        print(f"An error occurred: {e}")
+        logger.error("An error occurred: %s", e)
+
+def add_sidebar():
+    with st.sidebar:    
+        st.header("Sobre")
+        st.write(f"Versão {settings.VERSION}")    
+        st.caption(f"Modelos: {settings.LLM_MODEL}, {settings.DALLE_MODEL_VERSION}, {settings.EMBEDDING_MODEL_VERSION}")
+        st.caption(f":moneybag: Custo da sessão: {st.session_state.total_cost:.6f} USD")
+        st.write("© Midiacode Lda")
+
+def download_pdf(url):
+    """
+    Downloads a PDF file from URL and saves it to a temporary location.
+    
+    Args:
+        url (str): The URL of the PDF file to download
+        
+    Returns:
+        str: Full path to the saved PDF file
+    """
+    try:
+        # Send GET request to download the PDF
+        response = requests.get(url)
+        
+        # Check if request was successful
+        if response.status_code == 200:
+            # Extract filename from URL
+            filename = url.split('/')[-1]
+            if not filename.lower().endswith('.pdf'):
+                filename += '.pdf'
+                
+            # Create full path using temporary directory
+            temp_dir = tempfile.gettempdir()
+            file_path = os.path.join(temp_dir, filename)
+            
+            # Save the PDF file
+            with open(file_path, 'wb') as f:
+                f.write(response.content)
+                
+            logger.info("PDF downloaded successfully and saved at: %s", file_path)
+            return file_path
+        else:
+            logger.error("Failed to download PDF. Status code: %d", response.status_code)
+            return None
+            
+    except Exception as e:
+        logger.error("An error occurred while downloading PDF: %s", e)
+        return None
