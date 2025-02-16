@@ -10,10 +10,11 @@ from vector_db import VectorDatabase
 from vector_db_remote import VectorRemoteDatabase
 from streamlit.logger import get_logger
 from utils import add_sidebar
+from prompt_template import get_prompt
 
 logger = get_logger(__name__)
 
-ai = AIGenerator()
+ai = AIGenerator(template_prompt=get_prompt())
 db = VectorRemoteDatabase()
 
 # def streamed_response(question: str, my_vectorstore: FAISS):    
@@ -47,7 +48,7 @@ generate_image_tooltip = "Ative para criar imagens com IA."
 generate_image = st.toggle("Modo Imagem", False, help=generate_image_tooltip)
 
 assistant_avatar = "icone_midiacode.png" 
-user_avatar = "anonimous.png"
+user_avatar = "user.png"
 
 # Display chat messages from history on app rerun
 new_history = True

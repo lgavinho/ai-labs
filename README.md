@@ -74,7 +74,7 @@ To run the project, follow these steps:
 2. Run the main script using Streamlit:
 
    ```shell
-   streamlit run main.py
+   streamlit run streamlit_app.py
    ```
 
 ## References

@@ -13,8 +13,9 @@ from langchain_community.vectorstores import FAISS
 from pinecone import Pinecone, ServerlessSpec
 import tiktoken
 import settings
-from utils import extract_from_html_page, extract_from_pdf
+from utils import extract_from_html_page, extract_from_pdf, download_pdf
 from streamlit.logger import get_logger
+from rag import RAGService
 
 
 logger = get_logger(__name__)
@@ -80,15 +81,18 @@ class VectorRemoteDatabase:
         self.total_tokens = 0
         self.price_usage = 0
                 
-        # when not found create new vector        
+        # when not found create new vector
+        logger.info(f"Creating FAISS vectorstore from texts chunks with size {len(text_chunks)}...")
         faiss_index = FAISS.from_texts(text_chunks, self.embeddings)
         self.total_tokens = sum(self.calculate_tokens(chunk)
                                 for chunk in text_chunks)
-        self.price_usage = self.calculate_cost(self.total_tokens)                                
+        logger.info(f"Total token for {doc_uuid}: {self.total_tokens}")
+        self.price_usage = self.calculate_cost(self.total_tokens)
+        logger.info(f"Price usage for {doc_uuid}: {self.price_usage}")                                
         vector_index = self.save_faiss_vectors(faiss_index=faiss_index, doc_uuid=doc_uuid) 
         return vector_index
     
-    def get_or_create_vectorstore(self, doc_uuid: str):
+    def get_or_create_vectorstore(self, doc_uuid: str, source_url='midiacode_guide'):
         self.total_tokens = 0
         self.price_usage = 0        
         vector_index = self.get_pinecone_index()
@@ -96,15 +100,24 @@ class VectorRemoteDatabase:
         logger.info("Getting vectorstore for namespace: %s", doc_uuid)
         if self.namespace_exists(namespace=doc_uuid):
             logger.info("Namespace %s already exists.", doc_uuid)
+            # TODO check if necessary to update vectorstore
             return vector_index
 
-        text_chunks = self.create_text_chunks_knowledge_base()
+        if source_url == 'midiacode_guide':
+            logger.info("Creating vectorstore for namespace: %s", doc_uuid)            
+            text_chunks = self.create_midiacode_text_chunks_knowledge_base()
+        else:
+            logger.info("Creating vectorstore for namespace: %s", doc_uuid)                        
+            local_file_path = download_pdf(url=source_url)            
+            rag_service = RAGService()
+            text_chunks = rag_service.get_text_from_pdf_file(local_file_path)            
+            
         logger.info("Creating vectorstore...")
         vector_index = self.create_vectorstore(
             doc_uuid=doc_uuid, text_chunks=text_chunks)
         return vector_index
                     
-    def create_text_chunks_knowledge_base(self):        
+    def create_midiacode_text_chunks_knowledge_base(self):        
         # merge two sources
         logger.info("Extracting text from PDF: %s", settings.PDF_FILE_PATH_SOURCE)
         text_chunks_from_pdf = extract_from_pdf(settings.PDF_FILE_PATH_SOURCE)
