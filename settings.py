@@ -1,6 +1,7 @@
 import os
+VERSION = '0.0.11'
 
-
+CONTENT_SPOT_BASE_URL = "https://contentspot.midiacode.pt"
 MIDIACODE_LOGO_URL = "https://static.midiacode.com/logos/logo-midiacode-main-h.png"
 LLM_MODEL = "gpt-4o-mini-2024-07-18"
 DALLE_MODEL_VERSION = "dall-e-3"
@@ -18,4 +19,28 @@ PAGE_URL_SOURCE = "https://ptbr.midiacode.com/2022/02/22/perguntas-frequentes/"
 PINECONE_API_KEY = os.getenv('PINECONE_API_KEY')
 INDEX_NAME = "ailabs1"
 
+
+THINKING_ANIMATION = """
+<div style='display: flex; align-items: center; gap: 10px;'>
+    <div class='typing-dot'></div>
+    <div class='typing-dot'></div>
+    <div class='typing-dot'></div>
+</div>
+<style>
+    .typing-dot {
+        width: 8px;
+        height: 8px;
+        background-color: #ffffff;
+        border-radius: 50%;
+        animation: typing 1s infinite ease-in-out;
+    }
+    .typing-dot:nth-child(1) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(2) { animation-delay: 0.4s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.6s; }
+    @keyframes typing {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+    }
+</style>
+"""
 

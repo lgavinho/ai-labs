@@ -6,7 +6,6 @@ from langchain_openai import ChatOpenAI
 from pinecone.grpc import PineconeGRPC as Pinecone
 from pinecone import ServerlessSpec
 
-from prompt_template import get_prompt
 import settings
 from streamlit.logger import get_logger
 
@@ -17,9 +16,11 @@ class AIGenerator:
     
     last_price_usage = 0
 
-    def __init__(self):
+    def __init__(self, template_prompt, chat_type = "midiacode"):
         self.pinecone = Pinecone(api_key=settings.PINECONE_API_KEY)
         self.embeddings = OpenAIEmbeddings(model=settings.EMBEDDING_MODEL_VERSION)
+        self.template_prompt = template_prompt
+        self.is_generic = chat_type != "midiacode"
     
     def retrieve_context(self, query: str, db: FAISS):
         logger.info("Retrieving context for question: %s", query)
@@ -27,7 +28,9 @@ class AIGenerator:
         return similar_response
 
     def retrieve_context_from_remote(self, query: str, db_index, source_id: str):  
-        query_embedding = self.embeddings.embed_query(query)         
+        logger.info("Embedding query...")
+        query_embedding = self.embeddings.embed_query(query)
+        logger.info("Querying vector database...")
         results = db_index.query(
             vector=query_embedding,
             namespace=source_id,
@@ -38,8 +41,10 @@ class AIGenerator:
         if not results.matches:
             logger.warning("No matches found in vector database!!!")
             return None
-            
-        context_text = "\n".join([match.metadata['text'] for match in results.matches])        
+
+        logger.info("Found %d matches in vector database", len(results.matches))
+        context_text = "\n".join([match.metadata['text'] for match in results.matches])
+        # logger.info("Context text: %s", context_text)
         return context_text
 
     
@@ -54,9 +59,9 @@ class AIGenerator:
             str: The generated response.
         """
 
-        logger.info("Creating LLM chain...")
+        logger.info("Creating LLM chain v1...")
         llm = ChatOpenAI(temperature=0, model=settings.LLM_MODEL)
-        prompt = get_prompt()
+        prompt = self.template_prompt
         chain = prompt | llm
 
         logger.info("Retrieving context for question: %s", question)
@@ -89,27 +94,37 @@ class AIGenerator:
                 self.last_price_usage = input_price + out_price
         return answer
 
-    def create_text_response_with_remote_db(self, question: str, my_vectorstore, source_id: str) -> str:
+    def create_text_response_with_remote_db(self, question: str, my_vectorstore, source_id: str, add_midiacode_ads = True, content_title = None) -> str:
         # TODO use doc id to retrieve context from different names
-        logger.info("Creating LLM chain...")
+        logger.info("Creating LLM chain v2...")
         llm = ChatOpenAI(temperature=0, model=settings.LLM_MODEL)
-        prompt = get_prompt()
+        prompt = self.template_prompt
+        logger.info("Use Prompt: %s", prompt)
         chain = prompt | llm
 
         logger.info("Retrieving context for question: %s", question)
         custom_content = self.retrieve_context_from_remote(question, my_vectorstore, source_id)
+        logger.info("Custom content (truncated): %s ...", custom_content)
 
         logger.info("Invoking chain...")
         inputs = {
             "question": question,
             "custom_content": custom_content
         }
+        if self.is_generic:
+            inputs["content_title"] = content_title
         response = chain.invoke(inputs)
 
         answer = response.content
-        if random.choice(['yes', 'no']) == 'yes':
-            footer_message = "Se preferir, pode acessar nosso site [midiacode.com](https://midiacode.com/) e também solicitar um chat com nossa equipe."
-            answer += "\n\n" + footer_message
+
+        if answer is None:
+            logger.info(answer)
+            logger.warning("No answer is generated!")
+
+        if add_midiacode_ads:
+            if random.choice(['yes', 'no']) == 'yes':
+                footer_message = "Se preferir, pode acessar nosso site [midiacode.com](https://midiacode.com/) e também solicitar um chat com nossa equipe."
+                answer += "\n\n" + footer_message
 
         logger.info("Generated answer: %s", answer)
 
