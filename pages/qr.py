@@ -94,7 +94,7 @@ if short_code:
                 logger.info("Carregando base de conhecimento...")
                 with st.spinner("Carregando base de conhecimento..."):     
                     message_placeholder = st.empty()
-                    message_placeholder.write("O primeiro acesso ao conteúdo pode levar alguns minutos. Aguarde...")                                
+                    message_placeholder.write("O primeiro acesso ao conteúdo pode levar alguns minutos se o conteúdo for muito grande. Aguarde...")                                
                     vector_index = db.get_or_create_vectorstore(doc_uuid=short_code, source_url=source_url)
                     st.session_state[vector_store_session_id] = vector_index
                     message_placeholder.empty()  # Remove a mensagem após concluir
