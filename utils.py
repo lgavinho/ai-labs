@@ -92,7 +92,7 @@ def add_sidebar():
         st.header("Sobre")
         st.write(f"Versão {settings.VERSION}")    
         st.caption(f"Modelos: {settings.LLM_MODEL}, {settings.DALLE_MODEL_VERSION}, {settings.EMBEDDING_MODEL_VERSION}")
-        st.caption(f":moneybag: Custo da sessão: {st.session_state.total_cost:.6f} USD")
+        # st.caption(f":moneybag: Custo da sessão: {st.session_state.total_cost:.6f} USD")
         st.write("© Midiacode Lda")
 
 def download_pdf(url):

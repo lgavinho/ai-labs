@@ -1,5 +1,5 @@
 import os
-VERSION = '0.0.11'
+VERSION = '0.1.0'
 
 CONTENT_SPOT_BASE_URL = "https://contentspot.midiacode.pt"
 MIDIACODE_LOGO_URL = "https://static.midiacode.com/logos/logo-midiacode-main-h.png"
@@ -18,7 +18,7 @@ PAGE_URL_SOURCE = "https://ptbr.midiacode.com/2022/02/22/perguntas-frequentes/"
 
 PINECONE_API_KEY = os.getenv('PINECONE_API_KEY')
 INDEX_NAME = "ailabs1"
-
+LITE_DOMAINS = ["1mc.co", "colabor.club", "claro-qr.co", "ache-qr.co", "autent.ai"]
 
 THINKING_ANIMATION = """
 <div style='display: flex; align-items: center; gap: 10px;'>
