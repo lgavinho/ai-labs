@@ -23,17 +23,17 @@ def get_content_data(code: str) -> dict:
     return None
 
 def new_chat():
-    url = st.text_input("Entre uma URL 1mc.co (ex: https://1mc.co/140uKUqP)")
+    url = st.text_input("Entre a URL (ex: https://1mc.co/140uKUqP)", help="Aceita todos os domínios suportados pelo Midiacode Studio.")
     if st.button("Chat", key="chat_button"):
         if url:
-            pattern = r'(?:https?:\/\/)?1mc\.co\/(\w+)'
+            pattern = rf'(?:https?:\/\/)?({"|".join(settings.LITE_DOMAINS)})\/(\w+)'
             match = re.match(pattern, url)            
             if match:
-                extracted_code = match.group(1)
+                extracted_code = match.group(2)
                 st.query_params["code"] = extracted_code
                 st.rerun()
             else:
-                st.error("Por favor, insira uma URL válida no formato: https://1mc.co/code")    
+                st.error("Por favor, insira uma URL válida no formato: https://1mc.co/<seu-codigo>. Aceita todos os domínios suportados pelo Midiacode Studio.")    
 
 
 # Get the code parameter from URL
